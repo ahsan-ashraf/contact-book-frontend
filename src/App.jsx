@@ -1,9 +1,10 @@
 import "./App.css";
+import AuthForm from "./components/auth-form/auth-form";
 
 function App() {
   return (
     <>
-      <p>App.jsx</p>
+      <AuthForm />
     </>
   );
 }
