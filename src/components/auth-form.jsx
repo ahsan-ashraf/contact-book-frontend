@@ -11,8 +11,11 @@ import {
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import { useFormik } from "formik";
 import { getAuthSchema } from "./auth-schema";
+import { useAuth } from "../contexts/auth-context";
 
 function AuthForm() {
+  const { userId, email, token, login, signup, logout } = useAuth();
+
   const initialValues = { username: "", email: "", password: "" };
   const [isLogin, setIsLogin] = useState(false);
 
@@ -22,6 +25,11 @@ function AuthForm() {
     validationSchema: getAuthSchema(isLogin),
     onSubmit: async (values) => {
       console.log("Form Submitted:", values);
+      if (isLogin) {
+        login(values.email, values.password);
+      } else {
+        signup(values.username, values.email, values.password);
+      }
     },
   });
 
@@ -128,6 +136,7 @@ function AuthForm() {
             >
               {isLogin ? "Register" : "Login"}
             </Button>
+            <Button onClick={logout}>LOGOUT</Button>
           </Typography>
         </Paper>
       </Grid>
