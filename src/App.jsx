@@ -1,9 +1,11 @@
 import "./App.css";
-import AuthForm from "./components/auth-form/auth-form";
+import AuthForm from "./components/auth-form";
+import ContactBook from "./contactBook";
 
 function App() {
   return (
     <>
+      {/* <ContactBook /> */}
       <AuthForm />
     </>
   );
