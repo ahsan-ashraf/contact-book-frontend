@@ -1,4 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useFormik } from "formik";
+import { getAuthSchema } from "./auth-schema";
+import { useAuth } from "../contexts/auth-context";
+import { useNavigate } from "react-router-dom";
+import { AppRoutes } from "../Router/routes-metadata";
+import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import {
   Box,
   Button,
@@ -8,16 +14,18 @@ import {
   Avatar,
   Grid,
 } from "@mui/material";
-import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
-import { useFormik } from "formik";
-import { getAuthSchema } from "./auth-schema";
-import { useAuth } from "../contexts/auth-context";
 
 function AuthForm() {
-  const { userId, email, token, login, signup, logout } = useAuth();
-
+  const { userId, email, accessToken, login, signup, logout } = useAuth();
+  const navigate = useNavigate();
   const initialValues = { username: "", email: "", password: "" };
-  const [isLogin, setIsLogin] = useState(false);
+  const [isLogin, setIsLogin] = useState(true);
+
+  useEffect(() => {
+    if (accessToken) {
+      navigate(AppRoutes.ContactBook, { replace: true });
+    }
+  }, [accessToken]);
 
   const formik = useFormik({
     enableReinitialize: true,

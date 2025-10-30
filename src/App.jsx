@@ -1,12 +1,13 @@
+import { BrowserRouter } from "react-router-dom";
 import "./App.css";
-import AuthForm from "./components/auth-form";
-import ContactBook from "./contactBook";
+import AppRouter from "./Router/app-router";
 
 function App() {
   return (
     <>
-      {/* <ContactBook /> */}
-      <AuthForm />
+      <BrowserRouter>
+        <AppRouter />
+      </BrowserRouter>
     </>
   );
 }

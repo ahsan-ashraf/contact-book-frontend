@@ -57,6 +57,7 @@ function AuthContextProvider({ children }) {
       const response = await logoutApi();
       // console.log("-=> LOGOUT: " + JSON.stringify(response.data));
       setAuthData(null);
+      jsCookie.remove("authData");
     } catch (err) {
       console.log("-=> " + err.message);
     }
@@ -78,7 +79,7 @@ function AuthContextProvider({ children }) {
   return (
     <AuthContext.Provider
       value={{
-        accessToken: authData?.setAccessToken,
+        accessToken: authData?.accessToken,
         userId: authData?.userId,
         email: authData?.email,
         login: login,

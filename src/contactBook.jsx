@@ -17,7 +17,7 @@ import { useAuth } from "./contexts/auth-context";
 const API_BASE = "http://localhost:5000/api/contact-book";
 
 function ContactBook() {
-  const { userId, token } = useAuth();
+  const { userId, accessToken, logout } = useAuth();
   const [open, setOpen] = useState(false);
   const [contacts, setContacts] = useState([]);
   const [contactToEdit, setContactToEdit] = useState(null);
@@ -27,7 +27,7 @@ function ContactBook() {
     const fetchContacts = async () => {
       try {
         const response = await axios.get(`${API_BASE}/${userId}`, {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { Authorization: `Bearer ${accessToken}` },
         });
         console.log(
           "-=> Contacts Response: " + JSON.stringify(response.data.contacts)
@@ -41,7 +41,7 @@ function ContactBook() {
       }
     };
     fetchContacts();
-  }, [userId, token]);
+  }, [userId, accessToken]);
 
   const toggleForm = () => {
     setOpen((prev) => !prev);
@@ -59,7 +59,7 @@ function ContactBook() {
             relation: contact.relation,
           },
           {
-            headers: { Authorization: `Bearer ${token}` },
+            headers: { Authorization: `Bearer ${accessToken}` },
           }
         );
         console.log(
@@ -90,7 +90,7 @@ function ContactBook() {
               relation: contact.relation,
             },
             {
-              headers: { Authorization: `Bearer ${token}` },
+              headers: { Authorization: `Bearer ${accessToken}` },
             }
           );
           console.log("-=> Contact updated: " + JSON.stringify(response.data));
@@ -148,6 +148,7 @@ function ContactBook() {
     <>
       <Container>
         <Paper elevation={10} sx={{ mt: 3, padding: 5 }}>
+          <Button onClick={logout}>Logout</Button>
           <Typography variant="h3" gutterBottom>
             Contact Book
           </Typography>

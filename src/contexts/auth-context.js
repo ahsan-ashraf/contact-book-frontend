@@ -3,11 +3,10 @@ import { createContext, useContext } from "react";
 export const AuthContext = createContext({
   userId: "",
   email: "",
-  token: "",
+  accessToken: "",
   login: () => {},
   logout: () => {},
   signup: () => {},
-  setAccessToken: () => {},
 });
 
 export const useAuth = () => {
