@@ -4,7 +4,6 @@ import Typography from "@mui/material/Typography";
 import { useCallback, useState, useEffect } from "react";
 import Button from "@mui/material/Button";
 import Box from "@mui/material/Box";
-import { v4 as uuid } from "uuid";
 import TextField from "@mui/material/TextField";
 import IconButton from "@mui/material/IconButton";
 import SearchIcon from "@mui/icons-material/Search";
@@ -13,8 +12,12 @@ import axios from "axios";
 import AddContactForm from "./components/addContactForm";
 import CollapsibleTable from "./components/collapsibleTable";
 import { useAuth } from "./contexts/auth-context";
-
-const API_BASE = "http://localhost:5000/api/contact-book";
+import {
+  getAllContactsApi,
+  addContactApi,
+  updateContactApi,
+  deleteContactApi,
+} from "./api/contact-book-api";
 
 function ContactBook() {
   const { userId, accessToken, logout } = useAuth();
@@ -26,14 +29,11 @@ function ContactBook() {
   useEffect(() => {
     const fetchContacts = async () => {
       try {
-        const response = await axios.get(`${API_BASE}/${userId}`, {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        });
-        console.log(
-          "-=> Contacts Response: " + JSON.stringify(response.data.contacts)
-        );
+        const response = await getAllContactsApi();
+        //console.log("-=> Contacts: " + JSON.stringify(response.data.contacts));
         setContacts(response.data.contacts || []);
       } catch (err) {
+        // open error maodal here
         console.log(
           "-=> error can't fetch contacts: " +
             (err?.response?.data?.message || err?.message || err)
@@ -48,27 +48,14 @@ function ContactBook() {
   };
   const addContact = useCallback((contact) => {
     try {
-      const addContact = async () => {
-        const response = await axios.post(
-          `${API_BASE}/add`,
-          {
-            name: contact.name,
-            phone: contact.phone,
-            address: contact.address,
-            about: contact.about,
-            relation: contact.relation,
-          },
-          {
-            headers: { Authorization: `Bearer ${accessToken}` },
-          }
-        );
-        console.log(
-          "-=> contact add response: " + JSON.stringify(response.data)
-        );
-        setContacts((prev) => [...prev, { ...contact, id: uuid() }]);
+      const saveContact = async () => {
+        const response = await addContactApi(contact);
+        // console.log("-=> contact add: " + JSON.stringify(response.data));
+        setContacts((prev) => [...prev, { ...response.data.contact }]);
       };
-      addContact();
+      saveContact();
     } catch (err) {
+      // open error modal here
       console.log(
         "error can't add contact: " +
           (err?.response?.data?.message || err?.message || err)
@@ -77,42 +64,35 @@ function ContactBook() {
   }, []);
   const updateContact = useCallback(
     (contact) => {
-      const updateContact = async () => {
-        console.log("id: " + contact.id);
+      const editContact = async () => {
         try {
-          const response = await axios.patch(
-            `${API_BASE}/update/${contact.id}`,
-            {
-              name: contact.name,
-              phone: contact.phone,
-              address: contact.address,
-              about: contact.about,
-              relation: contact.relation,
-            },
-            {
-              headers: { Authorization: `Bearer ${accessToken}` },
-            }
-          );
-          console.log("-=> Contact updated: " + JSON.stringify(response.data));
+          const response = await updateContactApi(contact.id, contact);
+          // console.log("-=> Contact updated: " + JSON.stringify(response.data));
           setContacts((prev) =>
             prev.map((c) => (c.id === contact.id ? { ...contact } : c))
           );
           setContactToEdit(null);
         } catch (err) {
+          // open error modal here
           console.log(
             "-=> Can't edit contact: " +
               (err?.response?.data?.message || err?.message)
           );
         }
       };
-      updateContact();
+      editContact();
     },
     [contacts]
   );
   const deleteContact = useCallback(
     (id) => {
-      const filteredContacts = contacts.filter((c) => c.id !== id);
-      setContacts(filteredContacts);
+      const removeContact = async () => {
+        const response = await deleteContactApi(id);
+        const filteredContacts = contacts.filter((c) => c.id !== id);
+        setContacts(filteredContacts);
+        // console.log("-=> Delete Contact: " + JSON.stringify(response.data));
+      };
+      removeContact();
     },
     [contacts]
   );
