@@ -40,7 +40,6 @@ function AddContactForm({
       } else {
         addContact(values);
       }
-      alert(JSON.stringify(values, null, 2));
     },
   });
 
@@ -57,7 +56,9 @@ function AddContactForm({
         textAlign: "center",
       }}
     >
-      <Typography>Add Contact</Typography>
+      <Typography>
+        {contactToEdit !== null ? "Update Contact" : "Add Contact"}
+      </Typography>
       <IconButton onClick={toggleForm}>
         {open ? (
           <KeyboardArrowUp fontSize="large" />

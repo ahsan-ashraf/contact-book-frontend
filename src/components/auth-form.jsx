@@ -1,4 +1,13 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useFormik } from "formik";
+import { getAuthSchema } from "./auth-schema";
+import { useAuth } from "../contexts/auth-context";
+import { useNavigate } from "react-router-dom";
+import { AppRoutes } from "../Router/routes-metadata";
+import CircularProgress from "@mui/material/CircularProgress";
+import Backdrop from "@mui/material/Backdrop";
+import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
+import ErrorModal from "./error-modal";
 import {
   Box,
   Button,
@@ -8,16 +17,20 @@ import {
   Avatar,
   Grid,
 } from "@mui/material";
-import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
-import { useFormik } from "formik";
-import { getAuthSchema } from "./auth-schema";
-import { useAuth } from "../contexts/auth-context";
 
 function AuthForm() {
-  const { userId, email, token, login, signup, logout } = useAuth();
-
+  const [loading, setLoading] = useState(false);
+  const { userId, email, accessToken, login, signup, logout } = useAuth();
+  const navigate = useNavigate();
   const initialValues = { username: "", email: "", password: "" };
-  const [isLogin, setIsLogin] = useState(false);
+  const [isLogin, setIsLogin] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (accessToken) {
+      navigate(AppRoutes.ContactBook, { replace: true });
+    }
+  }, [accessToken]);
 
   const formik = useFormik({
     enableReinitialize: true,
@@ -25,10 +38,21 @@ function AuthForm() {
     validationSchema: getAuthSchema(isLogin),
     onSubmit: async (values) => {
       console.log("Form Submitted:", values);
-      if (isLogin) {
-        login(values.email, values.password);
-      } else {
-        signup(values.username, values.email, values.password);
+      try {
+        setLoading(true);
+        if (isLogin) {
+          await login(values.email, values.password);
+        } else {
+          await signup(values.username, values.email, values.password);
+        }
+      } catch (err) {
+        setError(
+          "Authentication Error: " + err?.response?.data?.message ||
+            err?.message ||
+            "Something went wrong."
+        );
+      } finally {
+        setLoading(false);
       }
     },
   });
@@ -139,6 +163,17 @@ function AuthForm() {
             <Button onClick={logout}>LOGOUT</Button>
           </Typography>
         </Paper>
+        <Backdrop
+          sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}
+          open={loading}
+        >
+          <CircularProgress color="inherit" />
+        </Backdrop>
+        <ErrorModal
+          open={!!error}
+          message={error}
+          onClose={() => setError(null)}
+        />
       </Grid>
     </Grid>
   );

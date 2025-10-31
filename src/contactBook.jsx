@@ -4,115 +4,116 @@ import Typography from "@mui/material/Typography";
 import { useCallback, useState, useEffect } from "react";
 import Button from "@mui/material/Button";
 import Box from "@mui/material/Box";
-import { v4 as uuid } from "uuid";
+import CircularProgress from "@mui/material/CircularProgress";
+import Backdrop from "@mui/material/Backdrop";
 import TextField from "@mui/material/TextField";
 import IconButton from "@mui/material/IconButton";
 import SearchIcon from "@mui/icons-material/Search";
 import ClearIcon from "@mui/icons-material/Clear";
-import axios from "axios";
 import AddContactForm from "./components/addContactForm";
 import CollapsibleTable from "./components/collapsibleTable";
 import { useAuth } from "./contexts/auth-context";
-
-const API_BASE = "http://localhost:5000/api/contact-book";
+import ErrorModal from "./components/error-modal";
+import {
+  getAllContactsApi,
+  addContactApi,
+  updateContactApi,
+  deleteContactApi,
+} from "./api/contact-book-api";
 
 function ContactBook() {
-  const { userId, token } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const { userId, accessToken, logout } = useAuth();
   const [open, setOpen] = useState(false);
   const [contacts, setContacts] = useState([]);
   const [contactToEdit, setContactToEdit] = useState(null);
   const [searchInput, setSearchInput] = useState("");
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchContacts = async () => {
       try {
-        const response = await axios.get(`${API_BASE}/${userId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        console.log(
-          "-=> Contacts Response: " + JSON.stringify(response.data.contacts)
-        );
+        setLoading(true);
+        const response = await getAllContactsApi();
         setContacts(response.data.contacts || []);
       } catch (err) {
-        console.log(
-          "-=> error can't fetch contacts: " +
-            (err?.response?.data?.message || err?.message || err)
+        setError(
+          "error can't fetch contacts: " + err?.response?.data?.message ||
+            err?.message ||
+            "Something went wrong."
         );
+      } finally {
+        setLoading(false);
       }
     };
     fetchContacts();
-  }, [userId, token]);
+  }, [userId, accessToken]);
 
   const toggleForm = () => {
     setOpen((prev) => !prev);
   };
   const addContact = useCallback((contact) => {
-    try {
-      const addContact = async () => {
-        const response = await axios.post(
-          `${API_BASE}/add`,
-          {
-            name: contact.name,
-            phone: contact.phone,
-            address: contact.address,
-            about: contact.about,
-            relation: contact.relation,
-          },
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
+    const saveContact = async () => {
+      try {
+        setLoading(true);
+        const response = await addContactApi(contact);
+        // console.log("-=> contact add: " + JSON.stringify(response.data));
+        setContacts((prev) => [...prev, { ...response.data.contact }]);
+      } catch (err) {
+        setError(
+          "error can't edit contact: " + err?.response?.data?.message ||
+            err?.message ||
+            "Something went wrong."
         );
-        console.log(
-          "-=> contact add response: " + JSON.stringify(response.data)
-        );
-        setContacts((prev) => [...prev, { ...contact, id: uuid() }]);
-      };
-      addContact();
-    } catch (err) {
-      console.log(
-        "error can't add contact: " +
-          (err?.response?.data?.message || err?.message || err)
-      );
-    }
+      } finally {
+        setLoading(false);
+      }
+    };
+    saveContact();
   }, []);
   const updateContact = useCallback(
     (contact) => {
-      const updateContact = async () => {
-        console.log("id: " + contact.id);
+      const editContact = async () => {
         try {
-          const response = await axios.patch(
-            `${API_BASE}/update/${contact.id}`,
-            {
-              name: contact.name,
-              phone: contact.phone,
-              address: contact.address,
-              about: contact.about,
-              relation: contact.relation,
-            },
-            {
-              headers: { Authorization: `Bearer ${token}` },
-            }
-          );
-          console.log("-=> Contact updated: " + JSON.stringify(response.data));
+          setLoading(true);
+          const response = await updateContactApi(contact.id, contact);
           setContacts((prev) =>
             prev.map((c) => (c.id === contact.id ? { ...contact } : c))
           );
           setContactToEdit(null);
         } catch (err) {
-          console.log(
-            "-=> Can't edit contact: " +
-              (err?.response?.data?.message || err?.message)
+          setError(
+            "error can't edit contact: " + err?.response?.data?.message ||
+              err?.message ||
+              "Something went wrong."
           );
+        } finally {
+          setLoading(false);
         }
       };
-      updateContact();
+      editContact();
     },
     [contacts]
   );
   const deleteContact = useCallback(
     (id) => {
-      const filteredContacts = contacts.filter((c) => c.id !== id);
-      setContacts(filteredContacts);
+      const removeContact = async () => {
+        try {
+          setLoading(true);
+          const response = await deleteContactApi(id);
+          const filteredContacts = contacts.filter((c) => c.id !== id);
+          setContacts(filteredContacts);
+        } catch (err) {
+          setError(
+            "error can't delete contact: " + err?.response?.data?.message ||
+              err?.message ||
+              "Something went wrong."
+          );
+        } finally {
+          setLoading(false);
+        }
+      };
+      removeContact();
     },
     [contacts]
   );
@@ -143,11 +144,22 @@ function ContactBook() {
     });
     return searchInput.length ? filteredContacts : contacts;
   };
+  const signOut = async () => {
+    try {
+      setLoading(true);
+      const response = await logout();
+    } catch (err) {
+      // open modal here
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <>
       <Container>
         <Paper elevation={10} sx={{ mt: 3, padding: 5 }}>
+          <Button onClick={signOut}>Logout</Button>
           <Typography variant="h3" gutterBottom>
             Contact Book
           </Typography>
@@ -204,6 +216,18 @@ function ContactBook() {
             </Box>
           )}
         </Paper>
+
+        <Backdrop
+          sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}
+          open={loading}
+        >
+          <CircularProgress color="inherit" />
+        </Backdrop>
+        <ErrorModal
+          open={!!error}
+          message={error}
+          onClose={() => setError(null)}
+        />
       </Container>
     </>
   );
