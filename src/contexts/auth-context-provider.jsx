@@ -59,7 +59,7 @@ function AuthContextProvider({ children }) {
         }
       );
 
-      autoLogoutOnAccessTokenExpiration();
+      // autoLogoutOnAccessTokenExpiration();
     } else {
       jsCookie.remove("authData");
     }
@@ -67,7 +67,6 @@ function AuthContextProvider({ children }) {
 
   const login = async (email, password) => {
     const response = await loginApi(email, password);
-    // console.log("-=> LOGIN: " + JSON.stringify(response.data));
     setAuthData({
       userId: response.data.userId,
       email: response.data.email,

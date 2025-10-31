@@ -35,7 +35,6 @@ function ContactBook() {
       try {
         setLoading(true);
         const response = await getAllContactsApi();
-        //console.log("-=> Contacts: " + JSON.stringify(response.data.contacts));
         setContacts(response.data.contacts || []);
       } catch (err) {
         setError(
@@ -54,23 +53,23 @@ function ContactBook() {
     setOpen((prev) => !prev);
   };
   const addContact = useCallback((contact) => {
-    try {
-      const saveContact = async () => {
+    const saveContact = async () => {
+      try {
         setLoading(true);
         const response = await addContactApi(contact);
         // console.log("-=> contact add: " + JSON.stringify(response.data));
         setContacts((prev) => [...prev, { ...response.data.contact }]);
-      };
-      saveContact();
-    } catch (err) {
-      setError(
-        "error can't add contact: " + err?.response?.data?.message ||
-          err?.message ||
-          "Something went wrong."
-      );
-    } finally {
-      setLoading(false);
-    }
+      } catch (err) {
+        setError(
+          "error can't edit contact: " + err?.response?.data?.message ||
+            err?.message ||
+            "Something went wrong."
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+    saveContact();
   }, []);
   const updateContact = useCallback(
     (contact) => {
@@ -78,7 +77,6 @@ function ContactBook() {
         try {
           setLoading(true);
           const response = await updateContactApi(contact.id, contact);
-          // console.log("-=> Contact updated: " + JSON.stringify(response.data));
           setContacts((prev) =>
             prev.map((c) => (c.id === contact.id ? { ...contact } : c))
           );
@@ -105,7 +103,6 @@ function ContactBook() {
           const response = await deleteContactApi(id);
           const filteredContacts = contacts.filter((c) => c.id !== id);
           setContacts(filteredContacts);
-          // console.log("-=> Delete Contact: " + JSON.stringify(response.data));
         } catch (err) {
           setError(
             "error can't delete contact: " + err?.response?.data?.message ||
