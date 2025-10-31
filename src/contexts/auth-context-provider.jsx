@@ -1,6 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { AuthContext } from "./auth-context";
 import jsCookie from "js-cookie";
+import { jwtDecode } from "jwt-decode";
+
 import {
   loginApi,
   logoutApi,
@@ -14,6 +16,7 @@ function AuthContextProvider({ children }) {
   //   return storedCookie ? JSON.parse(storedCookie) : null;
   // });
   const [authData, setAuthData] = useState();
+  const refreshTimerRef = useRef(null);
 
   useEffect(() => {
     const stored = jsCookie.get("authData");
@@ -22,6 +25,25 @@ function AuthContextProvider({ children }) {
       setAuthData(data);
     }
   }, []);
+
+  const logoutTimer = useRef(null);
+  const autoLogoutOnAccessTokenExpiration = () => {
+    const decoded = jwtDecode(authData.accessToken);
+    const expirationTime = decoded.exp * 1000; // exp is in seconds → ms
+    const currentTime = Date.now();
+    const remaining = expirationTime - currentTime;
+
+    if (logoutTimer.current) {
+      clearTimeout(logoutTimer.current);
+    }
+
+    if (remaining > 0) {
+      logoutTimer.current = setTimeout(() => {
+        console.log("Access token expired — auto logging out.");
+        logout();
+      }, remaining);
+    }
+  };
 
   useEffect(() => {
     if (authData) {
@@ -36,44 +58,36 @@ function AuthContextProvider({ children }) {
           expires: 1 / 24, // 1 hour
         }
       );
+
+      autoLogoutOnAccessTokenExpiration();
+    } else {
+      jsCookie.remove("authData");
     }
   }, [authData]);
 
   const login = async (email, password) => {
-    try {
-      const response = await loginApi(email, password);
-      // console.log("-=> LOGIN: " + JSON.stringify(response.data));
-      setAuthData({
-        userId: response.data.userId,
-        email: response.data.email,
-        accessToken: response.data.accessToken,
-      });
-    } catch (err) {
-      console.log("-=> " + err.message);
-    }
+    const response = await loginApi(email, password);
+    // console.log("-=> LOGIN: " + JSON.stringify(response.data));
+    setAuthData({
+      userId: response.data.userId,
+      email: response.data.email,
+      accessToken: response.data.accessToken,
+    });
   };
   const logout = async () => {
-    try {
-      const response = await logoutApi();
-      // console.log("-=> LOGOUT: " + JSON.stringify(response.data));
-      setAuthData(null);
-      jsCookie.remove("authData");
-    } catch (err) {
-      console.log("-=> " + err.message);
-    }
+    const response = await logoutApi();
+    // console.log("-=> LOGOUT: " + JSON.stringify(response.data));
+    setAuthData(null);
+    jsCookie.remove("authData");
   };
   const signup = async (username, email, password) => {
-    try {
-      const response = await signupApi(username, email, password);
-      // console.log("-=> SIGNUP: " + JSON.stringify(response.data));
-      setAuthData({
-        userId: response.data.userId,
-        email: response.data.email,
-        accessToken: response.data.accessToken,
-      });
-    } catch (err) {
-      console.log("-=> " + err.message);
-    }
+    const response = await signupApi(username, email, password);
+    // console.log("-=> SIGNUP: " + JSON.stringify(response.data));
+    setAuthData({
+      userId: response.data.userId,
+      email: response.data.email,
+      accessToken: response.data.accessToken,
+    });
   };
 
   return (
