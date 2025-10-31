@@ -7,6 +7,7 @@ import { AppRoutes } from "../Router/routes-metadata";
 import CircularProgress from "@mui/material/CircularProgress";
 import Backdrop from "@mui/material/Backdrop";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
+import ErrorModal from "./error-modal";
 import {
   Box,
   Button,
@@ -23,6 +24,7 @@ function AuthForm() {
   const navigate = useNavigate();
   const initialValues = { username: "", email: "", password: "" };
   const [isLogin, setIsLogin] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     if (accessToken) {
@@ -44,7 +46,11 @@ function AuthForm() {
           await signup(values.username, values.email, values.password);
         }
       } catch (err) {
-        // open err modal here
+        setError(
+          "Authentication Error: " + err?.response?.data?.message ||
+            err?.message ||
+            "Something went wrong."
+        );
       } finally {
         setLoading(false);
       }
@@ -163,6 +169,11 @@ function AuthForm() {
         >
           <CircularProgress color="inherit" />
         </Backdrop>
+        <ErrorModal
+          open={!!error}
+          message={error}
+          onClose={() => setError(null)}
+        />
       </Grid>
     </Grid>
   );

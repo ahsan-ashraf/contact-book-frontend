@@ -13,6 +13,7 @@ import ClearIcon from "@mui/icons-material/Clear";
 import AddContactForm from "./components/addContactForm";
 import CollapsibleTable from "./components/collapsibleTable";
 import { useAuth } from "./contexts/auth-context";
+import ErrorModal from "./components/error-modal";
 import {
   getAllContactsApi,
   addContactApi,
@@ -27,6 +28,7 @@ function ContactBook() {
   const [contacts, setContacts] = useState([]);
   const [contactToEdit, setContactToEdit] = useState(null);
   const [searchInput, setSearchInput] = useState("");
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchContacts = async () => {
@@ -36,10 +38,10 @@ function ContactBook() {
         //console.log("-=> Contacts: " + JSON.stringify(response.data.contacts));
         setContacts(response.data.contacts || []);
       } catch (err) {
-        // open error maodal here
-        console.log(
-          "-=> error can't fetch contacts: " +
-            (err?.response?.data?.message || err?.message || err)
+        setError(
+          "error can't fetch contacts: " + err?.response?.data?.message ||
+            err?.message ||
+            "Something went wrong."
         );
       } finally {
         setLoading(false);
@@ -61,10 +63,10 @@ function ContactBook() {
       };
       saveContact();
     } catch (err) {
-      // open error modal here
-      console.log(
-        "error can't add contact: " +
-          (err?.response?.data?.message || err?.message || err)
+      setError(
+        "error can't add contact: " + err?.response?.data?.message ||
+          err?.message ||
+          "Something went wrong."
       );
     } finally {
       setLoading(false);
@@ -82,10 +84,10 @@ function ContactBook() {
           );
           setContactToEdit(null);
         } catch (err) {
-          // open error modal here
-          console.log(
-            "-=> Can't edit contact: " +
-              (err?.response?.data?.message || err?.message)
+          setError(
+            "error can't edit contact: " + err?.response?.data?.message ||
+              err?.message ||
+              "Something went wrong."
           );
         } finally {
           setLoading(false);
@@ -105,7 +107,11 @@ function ContactBook() {
           setContacts(filteredContacts);
           // console.log("-=> Delete Contact: " + JSON.stringify(response.data));
         } catch (err) {
-          // open error modal here
+          setError(
+            "error can't delete contact: " + err?.response?.data?.message ||
+              err?.message ||
+              "Something went wrong."
+          );
         } finally {
           setLoading(false);
         }
@@ -220,6 +226,11 @@ function ContactBook() {
         >
           <CircularProgress color="inherit" />
         </Backdrop>
+        <ErrorModal
+          open={!!error}
+          message={error}
+          onClose={() => setError(null)}
+        />
       </Container>
     </>
   );
