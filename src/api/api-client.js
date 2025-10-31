@@ -2,7 +2,7 @@ import axios from "axios";
 import jsCookie from "js-cookie";
 
 const API = axios.create({
-  baseURL: "http://localhost:5000/api",
+  baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000/api", // for local development
   withCredentials: true,
   headers: { "Content-Type": "application/json" },
 });
